@@ -1,0 +1,85 @@
+substitutions:
+  name: "truck-locker"
+  friendly_name: Truck Locker
+
+esphome:
+  name: ${name}
+  friendly_name: ${friendly_name}
+  min_version: 2024.6.0
+  name_add_mac_suffix: false
+  project:
+    name: esphome.web
+    version: '1.0'
+
+esp8266:
+  board: esp01_1m
+
+# Enable logging
+logger:
+
+# Enable Home Assistant API
+api:
+
+# Allow Over-The-Air updates
+ota:
+- platform: esphome
+
+# Allow provisioning Wi-Fi via serial
+improv_serial:
+
+wifi:
+  # Set up a wifi access point
+  ap: {}
+
+# In combination with the `ap` this allows the user
+# to provision wifi credentials to the device via WiFi AP.
+captive_portal:
+
+dashboard_import:
+  package_import_url: github://esphome/example-configs/esphome-web/esp8266.yaml@main
+  import_full_config: true
+
+# Enable web server
+web_server:
+
+# Define the GPIO output
+output:
+  - platform: gpio
+    pin: GPIO5
+    id: momentary_output
+    
+# Define the switch to control the output
+switch:
+  - platform: output
+    name: "Momentary Output"
+    output: momentary_output
+    id: momentary_switch
+    internal: true
+
+# Define the button on the web server
+button:
+  - platform: template
+    name: "Momentary Button"
+    on_press:
+      then:
+        - switch.turn_on: momentary_switch
+        - delay: 500ms
+        - switch.turn_off: momentary_switch
+
+# Schedule the button press at 12:30 AM using time-based automation
+time:
+  - platform: homeassistant
+    id: homeassistant_time
+    on_time:
+      - seconds: 0
+        minutes: 05
+        hours: 0
+        then:
+          - logger.log: "Locked via Automation"
+          - switch.turn_on: momentary_switch
+          - delay: 500ms
+          - switch.turn_off: momentary_switch
+          - delay: 1000ms
+          - switch.turn_on: momentary_switch
+          - delay: 500ms
+          - switch.turn_off: momentary_switch
